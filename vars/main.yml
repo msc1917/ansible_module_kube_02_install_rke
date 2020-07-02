@@ -1,0 +1,10 @@
+rke:      { version: 'v1.0.4',
+            os_user: { 
+              comment: "rke User",
+              user: "rke",
+              uid: 1196,
+              group: "rke",
+              gid: 1196,
+              groups: [ "docker", "sudo-nopwd" ]
+              } 
+            }

@@ -1,0 +1,6 @@
+
+kubernetes_engine: kubeadm
+kubernetes_reinstall: false
+kubernetes_ssh_keys: []
+
+do_software_upgrade: true

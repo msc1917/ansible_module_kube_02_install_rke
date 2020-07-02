@@ -1,0 +1,41 @@
+---
+- name: Copy rke binary x64
+  copy:
+      src: "{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ download.rke.version }}/rke_linux-amd64"
+      dest: /home/{{ rke.os_user.user }}/rke
+      owner: {{ rke.os_user.user }}
+      group: {{ rke.os_user.group }}
+      mode: 755
+  become: yes
+  when:
+    - ansible_facts.architecture == "x86_64"
+    - k8s_node is defined
+    - k8s_node == "install_master"
+
+- name: Copy rke binary arm64
+  copy:
+      src: "{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ download.rke.version }}/rke_linux-arm64"
+      dest: /home/{{ rke.os_user.user }}/rke
+      owner: {{ rke.os_user.user }}
+      group: {{ rke.os_user.group }}
+      mode: 755
+  become: yes
+  when:
+    - ansible_facts.architecture is search("aarch64")
+    # - ansible_facts.userspace_bits == "64"
+    - k8s_node is defined
+    - k8s_node == "install_master"
+
+- name: Copy rke binary armhf
+  copy:
+      src: "{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ download.rke.version }}/rke_linux-arm"
+      dest: /home/{{ rke.os_user.user }}/rke
+      owner: {{ rke.os_user.user }}
+      group: {{ rke.os_user.group }}
+      mode: 755
+  become: yes
+  when:
+    - ansible_facts.architecture is search("arm")
+    - ansible_facts.userspace_bits == "32"
+    - k8s_node is defined
+    - k8s_node == "install_master"

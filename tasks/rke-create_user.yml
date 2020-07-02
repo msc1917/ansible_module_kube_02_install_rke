@@ -1,0 +1,53 @@
+---
+- name: Create rke Group
+  group:
+    name: "{{ rke.os_user.group }}"
+    gid: "{{ rke.os_user.gid }}"
+    state: present
+  become: yes
+
+- name: Create rke User
+  user:
+    name: "{{ rke.os_user.user }}"
+    comment: "{{ rke.os_user.comment }}"
+    group: "{{ rke.os_user.group }}"
+    groups: "{{ rke.os_user.groups }}"
+    uid: "{{ rke.os_user.uid }}"
+    shell: "/bin/bash"
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    ssh_key_comment: "{{ rke.os_user.user }}@{{ inventory_hostname }}"
+    state: present
+  become: yes
+
+- name: Collect public keys of rke-users 
+  shell: "cat /home/{{ rke.os_user.user }}/.ssh/id_rsa.pub"
+  changed_when: False
+  register: ssh_public_key
+  become: yes
+
+- name: Set SSH-Key for default Admin User
+  authorized_key:
+    user: "{{ rke.os_user.user }}"
+    key: "{{ item.key }}"
+    state: present
+  become: yes
+  with_items:
+    - "{{ ssh_keys }}"
+  when: item.user in kubernetes_ssh_keys
+      
+- name: Set SSH-Key for kubernetes-users
+  authorized_key:
+    user: "{{ item[1] }}"
+    key: "{{ item[2] }}"
+    state: present
+  delegate_to: "{{ item[0] }}"
+  become: yes
+  with_nested:
+    - "{{groups['kubernetes']}}"
+    - "{{ rke.os_user.user }}"
+    - "{{ ssh_public_key.stdout }}"
+  when: 
+    - item[0] in ansible_play_hosts
+    - hostvars[item[0]].module_setup is defined

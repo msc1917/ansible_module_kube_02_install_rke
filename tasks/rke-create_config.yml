@@ -1,0 +1,13 @@
+- name: Generiere /home/rke/cluster.yml
+  vars:
+    kubernetes_servers: "{{ groups['kubernetes'] }}"
+  template:
+    src: cluster.yml.j2
+    dest: /home/engine_rke/cluster.yml
+    owner: rke
+    group: rke
+    mode: '0644'
+  become: yes
+  when:
+    - k8s_node is defined
+    - k8s_node == "install_master"

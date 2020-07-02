@@ -1,0 +1,20 @@
+- name: Create rke-users
+  include_tasks: engine_rke/rke-create_user.yml
+  when: 
+    - k8s_node in [ "install_master", "become_master", "node" ]
+    - serveNet_ip is defined
+    - kubernetes_engine == "rke"
+
+- name: Download rke-binary
+  include_tasks: engine_rke/rke-download.yml
+  when: 
+    - k8s_node in [ "install_master", "become_master", "node" ]
+    - serveNet_ip is defined
+    - kubernetes_engine == "rke"
+
+- name: Generate rke-config-file
+  include_tasks: engine_rke/rke-create_config.yml
+  when: 
+    - k8s_node in [ "install_master", "become_master", "node" ]
+    - serveNet_ip is defined
+    - kubernetes_engine == "rke"
