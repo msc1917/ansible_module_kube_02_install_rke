@@ -1,40 +1,44 @@
 ---
-- name: Setup Kubernetes Hosts
-  include_tasks: initial/main.yml
-  when:
-    - k8s_node is defined
-    - k8s_node in [ "install_master", "become_master", "node" ]
+- name: Cleanup rke
+  include_tasks: rke-cleanup.yml
+  tags: [ never, cleanup ]
 
-- name: Deinstall other kubernetes-engines
-  include_tasks: cleanup/main.yml
-  when:
-    - k8s_node is defined
-    - k8s_node in [ "install_master", "become_master", "node" ]
+- name: Cleanup other kubernetes-engines
+  include_role:
+    name: "{{ item }}"
+    apply:
+      tags:
+        - cleanup
+  with_items:
+    - kube_02_install_k3s
+    - kube_02_install_k8s
+    - kube_02_install_minikube
+  tags: [ nocleanup ]
 
-- name: Install minikube-engine
-  include_tasks: engine_minikube/main.yml
-  when:
-    - k8s_node is defined
-    - k8s_node in [ "install_master", "become_master", "node" ]
-    - kubernetes_engine == "minikube"
+- name: Download rke
+  include_tasks: rke-download.yml
+  when: 
+    - serveNet_ip is defined
+    - kubernetes_engine == "rke"
+  tags: [ download ]
 
-- name: Install vanilla kubernetes
-  include_tasks: engine_kubeadm/main.yml
-  when:
-    - k8s_node is defined
+- name: Create rke-users
+  include_tasks: rke-create_user.yml
+  when: 
     - k8s_node in [ "install_master", "become_master", "node" ]
-    - kubernetes_engine == "kubeadm"
-
-- name: Install rke-engine
-  include_tasks: engine_rke/main.yml
-  when:
-    - k8s_node is defined
-    - k8s_node in [ "install_master", "become_master", "node" ]
+    - serveNet_ip is defined
     - kubernetes_engine == "rke"
 
-- name: Install k3s-engine
-  include_tasks: engine_k3s/main.yml
-  when:
-    - k8s_node is defined
+- name: Download rke-binary
+  include_tasks: rke-download.yml
+  when: 
     - k8s_node in [ "install_master", "become_master", "node" ]
-    - kubernetes_engine == "k3s"
+    - serveNet_ip is defined
+    - kubernetes_engine == "rke"
+
+- name: Generate rke-config-file
+  include_tasks: rke-create_config.yml
+  when: 
+    - k8s_node in [ "install_master", "become_master", "node" ]
+    - serveNet_ip is defined
+    - kubernetes_engine == "rke"

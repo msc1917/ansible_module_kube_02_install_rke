@@ -1,41 +1,29 @@
 ---
-- name: Copy rke binary x64
-  copy:
-      src: "{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ download.rke.version }}/rke_linux-amd64"
-      dest: /home/{{ rke.os_user.user }}/rke
-      owner: {{ rke.os_user.user }}
-      group: {{ rke.os_user.group }}
-      mode: 755
-  become: yes
-  when:
-    - ansible_facts.architecture == "x86_64"
-    - k8s_node is defined
-    - k8s_node == "install_master"
+- name: Check if rke_linux-amd64 exitst
+  local_action: stat path="{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ rke.version }}/rke_linux-amd64"
+  run_once: true
+  become: no
+  register: file_adm64
 
-- name: Copy rke binary arm64
-  copy:
-      src: "{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ download.rke.version }}/rke_linux-arm64"
-      dest: /home/{{ rke.os_user.user }}/rke
-      owner: {{ rke.os_user.user }}
-      group: {{ rke.os_user.group }}
-      mode: 755
-  become: yes
-  when:
-    - ansible_facts.architecture is search("aarch64")
-    # - ansible_facts.userspace_bits == "64"
-    - k8s_node is defined
-    - k8s_node == "install_master"
+- name: Check if rke_linux-arm64 exitst
+  local_action: stat path="{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ rke.version }}/rke_linux-arm64"
+  run_once: true
+  become: no
+  register: file_arm64
 
-- name: Copy rke binary armhf
-  copy:
-      src: "{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ download.rke.version }}/rke_linux-arm"
-      dest: /home/{{ rke.os_user.user }}/rke
-      owner: {{ rke.os_user.user }}
-      group: {{ rke.os_user.group }}
-      mode: 755
-  become: yes
+- name: Check if rke_linux-arm exitst
+  local_action: stat path="{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ rke.version }}/rke_linux-arm"
+  run_once: true
+  become: no
+  register: file_arm
+
+- name: Downloading newest rke binaries locally
+  local_action: get_url url="{{ item }}" dest="{{ inventory_dir }}/dynamic_vars/files/download/rke/{{ rke.version }}"
+  run_once: true
+  become: no
+  with_items: 
+    - https://github.com/rancher/rke/releases/download/{{ rke.version }}/rke_linux-amd64
+    - https://github.com/rancher/rke/releases/download/{{ rke.version }}/rke_linux-arm64
+    - https://github.com/rancher/rke/releases/download/{{ rke.version }}/rke_linux-arm
   when:
-    - ansible_facts.architecture is search("arm")
-    - ansible_facts.userspace_bits == "32"
-    - k8s_node is defined
-    - k8s_node == "install_master"
+    - (not file_adm64.stat.exists) or (not file_arm64.stat.exists) or (not file_arm.stat.exists)
