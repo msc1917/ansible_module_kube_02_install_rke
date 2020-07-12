@@ -15,6 +15,18 @@
     - kube_02_install_minikube
   tags: [ nocleanup ]
 
+- name: Cleanup other kubernetes-engine-users
+  include_role:
+    name: "{{ item }}"
+    apply:
+      tags:
+        - cleanup
+  with_items:
+    - user_k3s
+    - user_k8s
+    - user_minikube
+  tags: [ nocleanup ]
+
 - name: Download rke
   include_tasks: rke-download.yml
   when: 
